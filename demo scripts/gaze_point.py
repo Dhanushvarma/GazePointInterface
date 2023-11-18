@@ -5,6 +5,7 @@ import pygame
 import time
 import numpy as np
 from datetime import datetime
+import cv2
 
 """
 Script to capture gaze data on image for fixed duration and store in csv file
@@ -102,7 +103,6 @@ class GazeSensor():
 
     def draw_marker_gaussian(self, x, y):
         """
-
         :param x: The transformed gaze_x values to pixel position of the display along x axis
         :param y: The transformed gaze_y values to pixel position of the display along y axis
         :return: None
@@ -115,7 +115,6 @@ class GazeSensor():
     @staticmethod
     def normalized_to_pixel_values(x_from_gaze, y_from_gaze, display_size):
         """
-
         :param x_from_gaze: Untransformed FPOGX (is between 0 and 1)
         :param y_from_gaze: Untransformed FPOGY (is between 0 and 1)
         :param display_size: contains the number of pixels along x and y axes
@@ -164,24 +163,94 @@ class GazeSensor():
         parsed_data = {}
         datalist = data.split(" ")
 
-        print(data)
-        print(datalist)
-
         for el in datalist:
-            if "FPOGX" in el:
-                parsed_data['FPOGX'] = float(el.split("\"")[1])
-            if "FPOGY" in el:
-                parsed_data['FPOGY'] = float(el.split("\"")[1])
-            if 'TIME="' in el:
-                time_value = el.split('"')[1]
-                parsed_data['TIME'] = float(time_value)
-                # parsed_data['TIME'] = float(el.split("\"")[1])
+            if "FPOGX=\"" in el:
+                try:
+                    parsed_data['FPOGX'] = float(el.split("\"")[1])
+                except IndexError:
+                    continue  # Skip if the expected format is not met
 
+            if "FPOGY=\"" in el:
+                try:
+                    parsed_data['FPOGY'] = float(el.split("\"")[1])
+                except IndexError:
+                    continue
+
+            if 'TIME="' in el:
+                try:
+                    time_value = el.split('"')[1]
+                    parsed_data['TIME'] = float(time_value)
+                except IndexError:
+                    continue
 
         return parsed_data if 'FPOGX' in parsed_data and 'FPOGY' in parsed_data and 'TIME' in parsed_data else None
 
 
-# Example usage
+    def init_pygame_video_display(self, video_path):
+        """
+        Initialize the display for video playback and gaze tracking.
+        """
+        # Initialize pygame
+        pygame.init()
+        self.clock = pygame.time.Clock()
+
+        # Load the video
+        self.cap = cv2.VideoCapture(video_path)
+        if not self.cap.isOpened():
+            raise Exception("Error opening video file")
+
+        # Get video properties
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        # Set up the display
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+
+    def play_video_and_track_gaze(self):
+        df = pd.DataFrame(columns=['Frame', 'Timestamp', 'FPOGX', 'FPOGY'])
+
+        frame_count = 0
+        while self.cap.isOpened():
+            ret, frame = self.cap.read()
+            if not ret:
+                break
+
+            # Convert frame to a format suitable for pygame
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = np.rot90(frame)
+            frame = pygame.surfarray.make_surface(frame)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                    self.cap.release()
+                    pygame.quit()
+                    return
+
+            # Display the frame
+            self.screen.blit(frame, (0, 0))
+            pygame.display.flip()
+
+            # Capture gaze data
+            rxdat = self.socket.recv(1024)
+            data = bytes.decode(rxdat)
+            parsed_data = self.parse_gaze_data(data)
+
+            if parsed_data:
+                # Append gaze data with frame count
+                parsed_data['Frame'] = frame_count
+                df = df.append(parsed_data, ignore_index=True)
+
+            frame_count += 1
+            self.clock.tick(self.fps)  # Sync with video FPS
+
+        self.cap.release()
+        pygame.quit()
+        return df
+
+
+# Example usage for images
+""" 
 output_directory = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\csv_gaze_data'
 image_path = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\media\example_image.jpeg'  # Replace with your image path
 
@@ -189,4 +258,30 @@ gaze_sensor = GazeSensor(output_directory)
 gaze_sensor.connect_sensor()
 gaze_sensor.init_pygame_display(image_path)
 gaze_sensor.start_tracking()
+"""
+
+#Example usage for Videos
+
+# Example usage
+output_directory = r'C:\path\to\your\output\directory'  # Replace with your desired output directory
+video_path = r'C:\path\to\your\video.mp4'  # Replace with your video path
+
+# Initialize the GazeSensor
+gaze_sensor = GazeSensor(output_directory)
+
+# Connect to the gaze sensor hardware
+gaze_sensor.connect_sensor()
+
+# Initialize the pygame display for video
+gaze_sensor.init_pygame_video_display(video_path)
+
+# Play the video and track gaze data
+gaze_data = gaze_sensor.play_video_and_track_gaze()
+
+# Save the gaze data to a CSV file
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+csv_filename = f"gaze_data_video_{timestamp}.csv"
+csv_path = os.path.join(output_directory, csv_filename)
+gaze_data.to_csv(csv_path, index=False)
+
 
