@@ -6,6 +6,8 @@ import time
 import numpy as np
 from datetime import datetime
 import cv2
+import sdl2
+import sdl2.ext
 
 """
 Script to capture gaze data on image for fixed duration and store in csv file
@@ -41,26 +43,48 @@ class GazeSensor():
         self.socket.send(str.encode('<SET ID="ENABLE_SEND_TIME" STATE="1" />\r\n'))
         self.socket.send(str.encode('<SET ID="ENABLE_SEND_DATA" STATE="1" />\r\n'))
 
+    def get_secondary_display_position(self):
+        sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO)
+        num_displays = sdl2.SDL_GetNumVideoDisplays()
+        if num_displays < 2:
+            return 0, 0  # Default position for primary display
+
+        display_index = 1  # Assuming the secondary monitor is what we want
+        display_bounds = sdl2.SDL_Rect()
+        sdl2.SDL_GetDisplayBounds(display_index, display_bounds)
+        return display_bounds.x, display_bounds.y
+
     def init_pygame_display(self, image_path):
-        """
-        :param image_path:
-        :return: None
-        Function to init the active display where the image will be shown,
-        the actual image that will be shown and duration for how long the image
-        will be shown and we also init the blob to visualize the marker to track
-        gaze on image
-        """
+        window_x, window_y = self.get_secondary_display_position()
+        os.environ['SDL_VIDEO_WINDOW_POS'] = f"{window_x},{window_y}"
+
         pygame.init()
         displays = pygame.display.list_modes()
-        target_display = displays[0] if len(displays) == 1 else displays[1]
-        self.screen = pygame.display.set_mode(target_display, pygame.FULLSCREEN, display=0)
+        target_display = displays[0] if len(displays) == 1 else displays[-1]
+        self.screen = pygame.display.set_mode(target_display, pygame.FULLSCREEN)
         self.base_image = pygame.image.load(image_path)
         self.base_image = pygame.transform.scale(self.base_image, target_display)
         self.screen.blit(self.base_image, (0, 0))
         pygame.display.flip()
-        self.end_time = pygame.time.get_ticks() + self.duration  # 10 seconds in milliseconds
+        self.end_time = pygame.time.get_ticks() + self.duration
         self.marker_surface = self.create_gaussian_blob(50, 15, max_opacity=150)
         self.media_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    def init_pygame_video_display(self, video_path):
+        window_x, window_y = self.get_secondary_display_position()
+        os.environ['SDL_VIDEO_WINDOW_POS'] = f"{window_x},{window_y}"
+
+        pygame.init()
+        self.clock = pygame.time.Clock()
+        self.cap = cv2.VideoCapture(video_path)
+        if not self.cap.isOpened():
+            raise Exception("Error opening video file")
+
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+
 
     def gaussian_2d_kernel(self, kernel_size, sigma):
         """Generate 2D Gaussian kernel."""
@@ -186,27 +210,6 @@ class GazeSensor():
         return parsed_data if 'FPOGX' in parsed_data and 'FPOGY' in parsed_data and 'TIME' in parsed_data else None
 
 
-    def init_pygame_video_display(self, video_path):
-        """
-        Initialize the display for video playback and gaze tracking.
-        """
-        # Initialize pygame
-        pygame.init()
-        self.clock = pygame.time.Clock()
-
-        # Load the video
-        self.cap = cv2.VideoCapture(video_path)
-        if not self.cap.isOpened():
-            raise Exception("Error opening video file")
-
-        # Get video properties
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-        # Set up the display
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-
     def play_video_and_track_gaze(self):
         df = pd.DataFrame(columns=['Frame', 'Timestamp', 'FPOGX', 'FPOGY'])
 
@@ -250,7 +253,6 @@ class GazeSensor():
 
 
 # Example usage for images
-""" 
 output_directory = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\csv_gaze_data'
 image_path = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\media\example_image.jpeg'  # Replace with your image path
 
@@ -258,30 +260,30 @@ gaze_sensor = GazeSensor(output_directory)
 gaze_sensor.connect_sensor()
 gaze_sensor.init_pygame_display(image_path)
 gaze_sensor.start_tracking()
-"""
+
 
 #Example usage for Videos
 
 # Example usage
-output_directory = r'C:\path\to\your\output\directory'  # Replace with your desired output directory
-video_path = r'C:\path\to\your\video.mp4'  # Replace with your video path
-
-# Initialize the GazeSensor
-gaze_sensor = GazeSensor(output_directory)
-
-# Connect to the gaze sensor hardware
-gaze_sensor.connect_sensor()
-
-# Initialize the pygame display for video
-gaze_sensor.init_pygame_video_display(video_path)
-
-# Play the video and track gaze data
-gaze_data = gaze_sensor.play_video_and_track_gaze()
-
-# Save the gaze data to a CSV file
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-csv_filename = f"gaze_data_video_{timestamp}.csv"
-csv_path = os.path.join(output_directory, csv_filename)
-gaze_data.to_csv(csv_path, index=False)
+# output_directory = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\csv_gaze_data'  # Replace with your desired output directory
+# video_path = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\media\sample_video.mp4'  # Replace with your video path
+#
+# # Initialize the GazeSensor
+# gaze_sensor = GazeSensor(output_directory)
+#
+# # Connect to the gaze sensor hardware
+# gaze_sensor.connect_sensor()
+#
+# # Initialize the pygame display for video
+# gaze_sensor.init_pygame_video_display(video_path)
+#
+# # Play the video and track gaze data
+# gaze_data = gaze_sensor.play_video_and_track_gaze()
+#
+# # Save the gaze data to a CSV file
+# timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+# csv_filename = f"gaze_data_video_{timestamp}.csv"
+# csv_path = os.path.join(output_directory, csv_filename)
+# gaze_data.to_csv(csv_path, index=False)
 
 

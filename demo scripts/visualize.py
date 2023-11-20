@@ -3,6 +3,7 @@ import pandas as pd
 from PIL import Image, ImageDraw
 import numpy as np
 import os
+from datetime import datetime
 
 
 def create_gaze_video(image_path, csv_path, output_video_path, frame_rate=30):
@@ -37,7 +38,11 @@ def create_gaze_video(image_path, csv_path, output_video_path, frame_rate=30):
 
 # Example usage
 image_path = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\media\example_image.jpeg'   # Replace with the path to your image
-csv_path = r"C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\csv_gaze_data\gaze_data_example_image_20231117_175740.csv" # Replace with the path to your CSV file
-output_video_path = 'output_video.mp4'  # Path for the output video
+csv_path = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\csv_gaze_data\gaze_data_example_image_20231119_193509.csv' # Replace with the path to your CSV file
+output_visual_dir = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\visuals'  # Path for the output video
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+visual_filename = f"gaze_data_video_{timestamp}.mp4"
+output_video_path = os.path.join(output_visual_dir, visual_filename)
 
 create_gaze_video(image_path, csv_path, output_video_path)

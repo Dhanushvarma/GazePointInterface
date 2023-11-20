@@ -1,6 +1,9 @@
 import cv2
 import pandas as pd
 import numpy as np
+from datetime import datetime
+import os
+
 
 def visualize_gaze_on_video(video_path, gaze_data_csv, output_video_path):
     # Load gaze data from CSV
@@ -44,9 +47,14 @@ def visualize_gaze_on_video(video_path, gaze_data_csv, output_video_path):
     cap.release()
     out.release()
 
+
 # Example usage
-video_path = 'path_to_your_video.mp4'          # Replace with the path to your video
-gaze_data_csv = 'path_to_your_csv_file.csv'    # Replace with the path to your CSV file
-output_video_path = 'output_gaze_video.mp4'    # Path for the output video
+video_path = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\media\sample_video.mp4'  # Replace with the path to your video
+gaze_data_csv = r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\csv_gaze_data\gaze_data_video_20231119_193113.csv'  # Replace with the path to your CSV file
+output_visual_dir =  r'C:\Users\Dhanush\PycharmProjects\gazepoint_LIRA\visuals'  # Path for the output video
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+visual_filename = f"gaze_data_video_{timestamp}.mp4"
+output_video_path = os.path.join(output_visual_dir, visual_filename)
 
 visualize_gaze_on_video(video_path, gaze_data_csv, output_video_path)
