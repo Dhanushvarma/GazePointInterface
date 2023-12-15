@@ -1,5 +1,5 @@
 ######################################################################################
-# GazepointAPI.py - Example Client
+# GazepointAPI_vanilla.py - Example Client
 # Written in 2013 by Gazepoint www.gazept.com
 #
 # To the extent possible under law, the author(s) have dedicated all copyright
