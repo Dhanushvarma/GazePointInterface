@@ -5,7 +5,8 @@ class GazepointClient:
     def __init__(self, host='127.0.0.1', port=4242):
         self.host = host  # SENSOR PARAM
         self.port = port  # SENSOR PARAM
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Client socket (Windows) <- Gaze Sensor(Server)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Client socket (Windows) <- Gaze Sensor(Server)
 
     def connect(self):
         self.socket.connect((self.host, self.port))  # Socket Connection
@@ -22,7 +23,9 @@ class GazepointClient:
 
     def receive_data(self, server):  # Takes data from the Sensor and ports it to the server
         while True:
-            data = self.socket.recv(1024).decode()  # Buffer Size for Sensor Data
+            data = self.socket.recv(4096).decode()  # Buffer Size for Sensor Data
+            # print(data)
+            print(len(data))
             server.forward_data(data)  # This server object corresponds to the DataForwarding Server
 
     def close(self):
@@ -30,11 +33,12 @@ class GazepointClient:
 
 
 class DataForwardingServer:
-    def __init__(self, port=12345):  # Match the port on Linux Machine
+    def __init__(self, port=6970):  # Match the port on Linux Machine
         self.host = '0.0.0.0'  # Set to '0.0.0.0' to listen to all requests
         self.port = port
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Socket Init
         self.client_socket = None  # Corresponds to the Linux Client
+        self.buffer = ''
 
     def start(self):
         self.server_socket.bind((self.host, self.port))  # Binding the server
@@ -52,6 +56,31 @@ class DataForwardingServer:
                 self.client_socket.close()
                 self.client_socket = None
 
+    # def forward_data(self, data):
+    #     """Forwards complete messages of a fixed length to the connected client."""
+    #     self.buffer += data  # Add new data to the buffer
+    #
+    #     while True:
+    #         start = self.buffer.find('<REC')
+    #
+    #         # Check if we have the start of a message and enough characters for a complete message
+    #         if start != -1 and len(self.buffer) >= start + 134:
+    #             # Extract a 134-character message
+    #             message_to_send = self.buffer[start:start + 134]
+    #             self.buffer = self.buffer[start + 134:]  # Remove the sent message from the buffer
+    #
+    #             if self.client_socket:
+    #                 try:
+    #                     self.client_socket.send(message_to_send.encode())
+    #                 except socket.error as e:
+    #                     print(f"Error sending data to client: {e}")
+    #                     self.client_socket.close()
+    #                     self.client_socket = None
+    #                     break  # Exit the loop if an error occurs
+    #         else:
+    #             # No complete message of required length in buffer
+    #             break
+
     def close(self):
         if self.client_socket:
             self.client_socket.close()
@@ -62,7 +91,7 @@ class DataForwardingServer:
 
 
 def main():
-    server = DataForwardingServer(port=12345)  # Use the port for your data forwarding server
+    server = DataForwardingServer(port=1212)  # Use the port for your data forwarding server
     server.start()
 
     gazepoint_client = GazepointClient(host='127.0.0.1', port=4242)  # Host and port of Gazepoint Sensor Server
