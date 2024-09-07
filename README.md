@@ -24,13 +24,14 @@ This setup is useful for scenarios where the eye-tracking sensor is connected to
 - Python 3.7+
 - Gazepoint eye-tracking sensor
 - Libraries: socket, pandas, pygame, numpy, sdl2
+- Download the Gazepoint API(Windows) from : https://www.gazept.com/downloads/?v=7516fd43adaa. In the password field, enter the password, provided in the physical instruction manual that ships with the sensor.
 
 ## Installation
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/gazepoint-client.git
-   cd gazepoint-client
+   git clone https://github.com/Dhanushvarma/GazePointInterface.git
+   cd GazePointInterface
    ```
 
 2. Install the required libraries:
