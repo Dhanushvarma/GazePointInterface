@@ -9,7 +9,7 @@ A Python interface for GazePoint eye trackers with simulation support. This pack
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/GazePointInterface.git
+git clone https://github.com/Dhanushvarma/GazePointInterface.git
 
 # Install in development mode
 cd GazePointInterface
