@@ -1,4 +1,3 @@
-# setup.py
 from setuptools import setup, find_packages
 
 setup(
@@ -11,8 +10,6 @@ setup(
     python_requires=">=3.6",
 )
 
-# Create root __init__.py
-# __init__.py in root directory
 from .gaze_sensor_server import GazepointClient, DataForwardingServer
 from sim_client.gaze_data_client import SimGazeClient
 from sim_client.gaze_data_processor import GazeDataUtil
