@@ -15,11 +15,12 @@ from contextlib import contextmanager
 @dataclass
 class GazeServerConfig:
     """Configuration for gaze server connection."""
+
     host: str
     port: int
     message_length: int
     buffer_size: int = 1024
-    xml_start_tag: str = '<REC'
+    xml_start_tag: str = "<REC"
 
 
 class SimGazeClient:
@@ -37,12 +38,12 @@ class SimGazeClient:
         """
         self._config = config
         self._socket: Optional[socket.socket] = None
-        self._buffer: str = ''
+        self._buffer: str = ""
         self._latest_message: Optional[str] = None
         self._lock = threading.Lock()
         self._running = False
         self._receive_thread: Optional[threading.Thread] = None
-        
+
         # Set up logging
         self._logger = logging.getLogger(__name__)
         self._setup_logging()
@@ -51,7 +52,7 @@ class SimGazeClient:
         """Configure logging for the client."""
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
@@ -61,10 +62,10 @@ class SimGazeClient:
     def _socket_connection(self) -> socket.socket:
         """
         Context manager for socket operations.
-        
+
         Yields:
             Connected socket object
-            
+
         Raises:
             ConnectionError: If connection cannot be established
         """
@@ -80,7 +81,7 @@ class SimGazeClient:
     def connect(self) -> None:
         """
         Establish connection to the gaze server and start the receiving thread.
-        
+
         Raises:
             ConnectionError: If connection cannot be established
         """
@@ -88,18 +89,16 @@ class SimGazeClient:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self._config.host, self._config.port))
             self._running = True
-            
+
             self._receive_thread = threading.Thread(
-                target=self._receive_messages,
-                daemon=True,
-                name="GazeReceiver"
+                target=self._receive_messages, daemon=True, name="GazeReceiver"
             )
             self._receive_thread.start()
-            
+
             self._logger.info(
                 f"Connected to gaze server at {self._config.host}:{self._config.port}"
             )
-            
+
         except socket.error as e:
             self._logger.error(f"Failed to connect: {e}")
             raise ConnectionError(f"Could not connect to server: {e}")
@@ -107,7 +106,7 @@ class SimGazeClient:
     def _process_message(self, message: str) -> None:
         """
         Process received message and update latest message in thread-safe manner.
-        
+
         Args:
             message: Raw message string to process
         """
@@ -149,14 +148,14 @@ class SimGazeClient:
             if start == -1 or len(self._buffer) < start + self._config.message_length:
                 break
 
-            message = self._buffer[start:start + self._config.message_length]
-            self._buffer = self._buffer[start + self._config.message_length:]
+            message = self._buffer[start : start + self._config.message_length]
+            self._buffer = self._buffer[start + self._config.message_length :]
             self._process_message(message)
 
     def get_latest_message(self) -> Optional[str]:
         """
         Get the latest received message in a thread-safe manner.
-        
+
         Returns:
             Latest message or None if no message received
         """
@@ -168,7 +167,7 @@ class SimGazeClient:
         if self._socket:
             self._socket.close()
             self._socket = None
-        self._buffer = ''
+        self._buffer = ""
         self._latest_message = None
         self._running = False
 
@@ -182,7 +181,7 @@ class SimGazeClient:
             self._socket = None
             self._logger.info("Disconnected from the server")
 
-    def __enter__(self) -> 'SimGazeClient':
+    def __enter__(self) -> "SimGazeClient":
         """Enable context manager support."""
         self.connect()
         return self
@@ -194,11 +193,7 @@ class SimGazeClient:
 
 def main() -> None:
     """Example usage of the SimGazeClient."""
-    config = GazeServerConfig(
-        host='192.168.1.93',
-        port=5478,
-        message_length=102
-    )
+    config = GazeServerConfig(host="192.168.1.93", port=5478, message_length=102)
 
     # Using context manager for automatic connection handling
     with SimGazeClient(config) as client:

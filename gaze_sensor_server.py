@@ -11,10 +11,12 @@ from typing import List, Optional, Set
 from dataclasses import dataclass
 from contextlib import contextmanager
 
+
 @dataclass
 class GazepointConfig:
     """Configuration for Gazepoint connection."""
-    host: str = '127.0.0.1'
+
+    host: str = "127.0.0.1"
     port: int = 4242
     buffer_size: int = 4096
     reconnect_delay: float = 5.0
@@ -25,14 +27,15 @@ class GazepointConfig:
             self.initialization_commands = [
                 '<SET ID="ENABLE_SEND_CURSOR" STATE="1" />\r\n',
                 '<SET ID="ENABLE_SEND_POG_FIX" STATE="1" />\r\n',
-                '<SET ID="ENABLE_SEND_DATA" STATE="1" />\r\n'
+                '<SET ID="ENABLE_SEND_DATA" STATE="1" />\r\n',
             ]
 
 
 @dataclass
 class ServerConfig:
     """Configuration for data forwarding server."""
-    host: str = '0.0.0.0'
+
+    host: str = "0.0.0.0"
     port: int = 6970
     max_clients: int = 5
     buffer_size: int = 4096
@@ -59,7 +62,7 @@ class GazepointClient:
         """Configure logging."""
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
@@ -88,7 +91,9 @@ class GazepointClient:
             self._send_initialization_commands()
             self._connected = True
             self._running = True
-            self._logger.info(f"Connected to Gazepoint at {self.config.host}:{self.config.port}")
+            self._logger.info(
+                f"Connected to Gazepoint at {self.config.host}:{self.config.port}"
+            )
             return True
         except socket.error as e:
             self._logger.error(f"Failed to connect to Gazepoint: {e}")
@@ -107,7 +112,7 @@ class GazepointClient:
                 self._logger.error(f"Failed to send command: {e}")
                 raise
 
-    def receive_data(self, server: 'DataForwardingServer') -> None:
+    def receive_data(self, server: "DataForwardingServer") -> None:
         """
         Continuously receive data from Gazepoint and forward to server.
 
@@ -162,7 +167,7 @@ class DataForwardingServer:
         """Configure logging."""
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
@@ -177,7 +182,9 @@ class DataForwardingServer:
             self._server_socket.listen(self.config.max_clients)
             self._running = True
 
-            self._logger.info(f"Server listening on {self.config.host}:{self.config.port}")
+            self._logger.info(
+                f"Server listening on {self.config.host}:{self.config.port}"
+            )
 
             # Start accepting clients in a separate thread
             threading.Thread(target=self._accept_clients, daemon=True).start()
@@ -225,7 +232,7 @@ class DataForwardingServer:
     def close(self) -> None:
         """Clean up resources and close all connections."""
         self._running = False
-        
+
         # Close all client connections
         with self._lock:
             for client in self._clients:
@@ -251,13 +258,13 @@ def main():
     # Configure logging for the main function
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     logger = logging.getLogger(__name__)
 
     # Create server and client configurations
     server_config = ServerConfig(port=1212)
-    gazepoint_config = GazepointConfig(host='127.0.0.1', port=4242)
+    gazepoint_config = GazepointConfig(host="127.0.0.1", port=4242)
 
     # Initialize server and client
     server = DataForwardingServer(server_config)

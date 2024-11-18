@@ -13,6 +13,7 @@ from numpy.typing import NDArray
 @dataclass
 class GazeCoordinates:
     """Data class to store processed gaze coordinates."""
+
     pixel_x: float
     pixel_y: float
 
@@ -83,7 +84,9 @@ class GazeDataUtil:
                 f"Gaze coordinates must be between 0 and 1. Got x={x}, y={y}"
             )
 
-    def gaze_to_pixels(self, gaze_input: str) -> Tuple[GazeCoordinates, Dict[str, float]]:
+    def gaze_to_pixels(
+        self, gaze_input: str
+    ) -> Tuple[GazeCoordinates, Dict[str, float]]:
         """
         Convert normalized gaze coordinates to pixel coordinates.
 
@@ -101,24 +104,21 @@ class GazeDataUtil:
         gaze_data = self.extract_data(gaze_input)
 
         try:
-            x = gaze_data['FPOGX']
-            y = gaze_data['FPOGY']
+            x = gaze_data["FPOGX"]
+            y = gaze_data["FPOGY"]
         except KeyError as e:
             raise ValueError(f"Missing required gaze parameter: {e}")
 
         self.validate_gaze_coordinates(x, y)
 
         pixel_coords = GazeCoordinates(
-            pixel_x=self.screen_width * x,
-            pixel_y=self.screen_height * y
+            pixel_x=self.screen_width * x, pixel_y=self.screen_height * y
         )
 
         return pixel_coords, gaze_data
 
     def transform_coordinate_system(
-        self,
-        coordinates: NDArray[np.float64],
-        origin: str = 'top_left'
+        self, coordinates: NDArray[np.float64], origin: str = "top_left"
     ) -> NDArray[np.float64]:
         """
         Transform coordinates between different coordinate system origins.
@@ -134,13 +134,13 @@ class GazeDataUtil:
         Raises:
             ValueError: If origin is not supported or coordinates array is invalid
         """
-        if origin not in ['top_left', 'bottom_left']:
+        if origin not in ["top_left", "bottom_left"]:
             raise ValueError("Supported origins are 'top_left' and 'bottom_left'")
 
         if not isinstance(coordinates, np.ndarray) or coordinates.shape[1] != 2:
             raise ValueError("Coordinates must be an Nx2 numpy array")
 
-        if origin == 'bottom_left':
+        if origin == "bottom_left":
             coordinates[:, 1] = self.screen_height - coordinates[:, 1]
 
         return coordinates
