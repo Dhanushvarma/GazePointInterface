@@ -1,85 +1,58 @@
-# GazepointClient and DataForwardingServer
+# GazePointInterface
 
-This project provides a Python implementation for interfacing with a Gazepoint eye-tracking sensor and forwarding the collected data to another machine. It consists of two main components: `GazepointClient` and `DataForwardingServer`.
-
-## Table of Contents
-1. [Overview](#overview)
-2. [Requirements](#requirements)
-3. [Installation](#installation)
-4. [Usage](#usage)
-5. [Class Descriptions](#class-descriptions)
-6. [Configuration](#configuration)
-7. [Troubleshooting](#troubleshooting)
-8. [Contributing](#contributing)
-9. [License](#license)
-
-## Overview
-
-The `GazepointClient` connects to a Gazepoint eye-tracking sensor, retrieves gaze data, and sends it to the `DataForwardingServer`. The server then forwards this data to another client, typically on a different machine.
-
-This setup is useful for scenarios where the eye-tracking sensor is connected to one computer, but the data needs to be processed or visualized on another.
-
-## Requirements
-
-- Python 3.7+
-- Gazepoint eye-tracking sensor
-- Libraries: socket, pandas, pygame, numpy, sdl2
-- Download the Gazepoint API(Windows) from : https://www.gazept.com/downloads/?v=7516fd43adaa. In the password field, enter the password, provided in the physical instruction manual that ships with the sensor.
+A Python interface for GazePoint eye trackers with simulation support. This package provides functionality for:
+- Connecting to GazePoint eye trackers
+- Data forwarding server for real-time eye tracking data
+- Simulation client for testing and development
 
 ## Installation
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/Dhanushvarma/GazePointInterface.git
-   cd GazePointInterface
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/GazePointInterface.git
 
-2. Install the required libraries:
-   ```
-   pip install pandas pygame numpy pysdl2
-   ```
-
-3. Ensure your Gazepoint sensor is properly connected and its software is installed.
+# Install in development mode
+cd GazePointInterface
+pip install -e .
+```
 
 ## Usage
 
-1. Start the Gazepoint sensor and its accompanying software.
+### GazePoint Server
+```python
+from gazepointinterface import GazepointClient, DataForwardingServer
 
-2. Run the script:
-   ```
-   python GazeSensorServer.py
-   ```
+# Initialize and start server
+server = DataForwardingServer(port=1212)
+server.start()
 
-3. The script will connect to the Gazepoint sensor, start collecting data, and forward it to the specified client.
+# Connect to GazePoint device
+client = GazepointClient(host='127.0.0.1', port=4242)
+client.connect()
 
-## Class Descriptions
+# Start receiving data
+try:
+    client.receive_data(server)
+except KeyboardInterrupt:
+    client.close()
+    server.close()
+```
 
-### GazepointClient
+### Simulation Client
+```python
+from gazepointinterface import SimGazeClient, GazeDataUtil
 
-This class handles the connection to the Gazepoint sensor and data retrieval.
+# Initialize gaze data processor
+gaze_util = GazeDataUtil(screen_width=1920, screen_height=1080)
 
-Key methods:
-- `connect()`: Establishes a connection with the sensor.
-- `receive_data(server)`: Continuously receives data from the sensor and forwards it to the server.
+# Connect to simulation server
+client = SimGazeClient(host='localhost', port=5478)
+client.connect()
 
-### DataForwardingServer
+# Get gaze data
+message = client.get_latest_message()
+```
 
-This class sets up a server to forward the received gaze data to another client.
-
-Key methods:
-- `start()`: Starts the server and waits for a client connection.
-- `forward_data(data)`: Forwards received data to the connected client.
-
-## Configuration
-
-You can modify the following parameters in the script:
-
-- `HOST` and `PORT` in `GazepointClient`: Address of the Gazepoint sensor.
-- `port` in `DataForwardingServer`: Port on which the forwarding server listens.
-- `output_dir` in `main()`: Directory for storing output files.
-
-## Troubleshooting
-
-- Ensure the Gazepoint sensor is properly connected and its software is running.
-- Check that the IP addresses and ports are correctly configured.
-- Verify that any firewalls or security software are not blocking the connections.
+## Requirements
+- Python >= 3.6
+- NumPy
