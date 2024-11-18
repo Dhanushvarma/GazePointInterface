@@ -47,7 +47,7 @@ This setup is useful for scenarios where the eye-tracking sensor is connected to
 
 2. Run the script:
    ```
-   python gazepoint_sensor.py
+   python GazeSensorServer.py
    ```
 
 3. The script will connect to the Gazepoint sensor, start collecting data, and forward it to the specified client.
@@ -83,11 +83,3 @@ You can modify the following parameters in the script:
 - Ensure the Gazepoint sensor is properly connected and its software is running.
 - Check that the IP addresses and ports are correctly configured.
 - Verify that any firewalls or security software are not blocking the connections.
-
-## Contributing
-
-Contributions to this project are welcome. Please fork the repository and submit a pull request with your changes.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
